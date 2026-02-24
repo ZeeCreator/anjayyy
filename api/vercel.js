@@ -1,128 +1,77 @@
 /**
  * Otakudesu API - Vercel Serverless Function
- * 
- * Note: Puppeteer mungkin tidak berfungsi di Vercel Free Tier
- * karena ukuran bundle yang besar (~180MB) dan timeout 10 detik.
- * 
- * Untuk scraper dengan Puppeteer, disarankan menggunakan:
- * - Vercel Pro (timeout 60 detik)
- * - Railway.app (rekomendasi)
- * - Render.com
+ * Menggunakan Undici (tanpa Puppeteer) untuk kompatibilitas Vercel
  */
 
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
-const { notFound, logger } = require('../middleware/logger');
+const { notFound } = require('../middleware/logger');
 const { errorHandler } = require('../middleware/errorHandler');
 const { getStats } = require('../utils/cache');
-
-// Load environment variables
-const NODE_ENV = process.env.VERCEL_ENV || process.env.NODE_ENV || 'production';
+const animeRoutes = require('../routes/anime-vercel');
 
 // Inisialisasi Express app
 const app = express();
 
-// ============================================
-// SECURITY MIDDLEWARE
-// ============================================
+// Security middleware
+app.use(helmet());
+app.use(cors({ origin: '*', credentials: true }));
 
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false,
-  crossOriginOpenerPolicy: false,
-  crossOriginResourcePolicy: false
-}));
-
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: true,
-  maxAge: 86400
-}));
-
-// ============================================
-// PARSING MIDDLEWARE
-// ============================================
-
+// Parsing middleware
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// ============================================
-// LOGGING MIDDLEWARE
-// ============================================
-
-if (NODE_ENV === 'development') {
-  app.use(logger);
-}
-
-// ============================================
-// API ROUTES
-// ============================================
 
 // Root endpoint
 app.get('/', (req, res) => {
   res.json({
     status: 'success',
-    message: 'Otakudesu API - REST API untuk scraping data anime dari Otakudesu',
+    message: 'Otakudesu API - Vercel Serverless',
     version: '1.0.0',
-    platform: 'Vercel Serverless',
+    platform: process.env.VERCEL ? 'Vercel' : 'Local',
     endpoints: {
-      'GET /api/latest': 'Mendapatkan daftar anime terbaru',
-      'GET /api/anime/:slug': 'Mendapatkan detail anime',
-      'GET /api/anime/:slug/episodes': 'Mendapatkan daftar episode',
-      'GET /api/episode?url=': 'Mendapatkan link download episode',
-      'GET /api/episode/slug?url=': 'Mendapatkan slug anime dari URL episode',
-      'GET /api/search?q=': 'Mencari anime',
-      'GET /api/health': 'Health check',
-      'GET /api/cache/stats': 'Statistik cache'
-    },
-    documentation: 'https://github.com/yourusername/otaku-api#readme'
+      'GET /api/latest': 'Latest anime',
+      'GET /api/anime/:slug': 'Anime detail',
+      'GET /api/anime/:slug/episodes': 'Episodes list',
+      'GET /api/episode?url=': 'Episode links',
+      'GET /api/episode/slug?url=': 'Get slug from episode',
+      'GET /api/search?q=': 'Search anime',
+      'GET /api/health': 'Health check'
+    }
   });
 });
 
-// Health check endpoint
+// Health check
 app.get('/health', (req, res) => {
   res.json({
     status: 'success',
     data: {
       status: 'healthy',
       timestamp: new Date().toISOString(),
-      environment: NODE_ENV,
-      platform: 'Vercel Serverless'
+      platform: process.env.VERCEL ? 'Vercel' : 'Local'
     }
   });
 });
 
-// Cache stats endpoint
+// Cache stats
 app.get('/api/cache/stats', (req, res) => {
-  const stats = getStats();
   res.json({
     status: 'success',
     data: {
-      ...stats,
+      ...getStats(),
       timestamp: new Date().toISOString()
     }
   });
 });
 
-// Mount API routes (gunakan anime-vercel.js untuk Vercel)
-app.use('/api', require('../routes/anime-vercel'));
+// API routes
+app.use('/api', animeRoutes);
 
-// ============================================
-// ERROR HANDLING
-// ============================================
-
+// Error handling
 app.use(notFound);
 app.use(errorHandler);
 
-// ============================================
-// VERCEL EXPORT
-// ============================================
-
-// Export sebagai Vercel serverless function
+// Export untuk Vercel
 module.exports = app;
-
-// Juga export default untuk kompatibilitas
 module.exports.default = app;
+module.exports.handler = app;
