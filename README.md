@@ -51,17 +51,45 @@ docker build -t otaku-api .
 docker run -p 3000:3000 otaku-api
 ```
 
+### Cara 3: Vercel Deployment
+
+```bash
+# Install Vercel CLI
+npm install -g vercel
+
+# Login ke Vercel
+vercel login
+
+# Deploy ke Vercel (development)
+vercel dev
+
+# Deploy ke production
+vercel --prod
+```
+
+**Catatan Penting untuk Vercel:**
+- ⚠️ **Puppeteer di Vercel** memiliki limitasi ukuran (50MB untuk free tier)
+- ⚠️ **Timeout** maksimal 10 detik untuk free tier, 60 detik untuk pro
+- ✅ Disarankan menggunakan **Vercel Pro** atau alternatif seperti Railway/Render
+- ✅ Atau gunakan mode tanpa Puppeteer untuk scraping sederhana
+
 ## 📁 Struktur Project
 
 ```
 api-anime2/
 │
 ├── server.js              # Main server file
+├── serverless/app.js      # Serverless app untuk Vercel
 ├── package.json           # Dependencies
+├── vercel.json            # Vercel configuration
 ├── Dockerfile             # Docker configuration
 ├── docker-compose.yml     # Docker Compose
 ├── .env                   # Environment variables
 ├── .gitignore
+├── .vercelignore          # Vercel ignore file
+│
+├── api/
+│   └── index.js           # Vercel serverless entry
 │
 ├── routes/
 │   └── anime.js           # API routes
@@ -397,6 +425,64 @@ print(results)
 3. **Delay Random** - Menghindari deteksi bot
 4. **Browser Singleton** - Reuse Puppeteer browser instance
 5. **Graceful Shutdown** - Cleanup resource saat shutdown
+
+## 🚀 Deployment
+
+### Vercel Deployment
+
+```bash
+# 1. Install Vercel CLI
+npm install -g vercel
+
+# 2. Login ke Vercel
+vercel login
+
+# 3. Deploy ke development
+vercel dev
+
+# 4. Deploy ke production
+vercel --prod
+```
+
+**Environment Variables di Vercel:**
+- Pergi ke Dashboard Vercel > Project > Settings > Environment Variables
+- Tambahkan semua variabel dari `.env.example`
+
+**⚠️ Limitasi Vercel Free Tier:**
+- Max bundle size: 50MB (Puppeteer ~180MB)
+- Max timeout: 10 detik
+- Max memory: 1024MB
+
+**Solusi:**
+1. Gunakan **Vercel Pro** (max timeout 60 detik)
+2. Atau gunakan **Railway/Render** (rekomendasi untuk scraper)
+3. Atau disable Puppeteer untuk scraping sederhana
+
+### Railway/Render Deployment (Rekomendasi)
+
+```bash
+# 1. Push code ke GitHub
+git init
+git add .
+git commit -m "Initial commit"
+git push origin main
+
+# 2. Deploy di Railway/Render
+# - Connect GitHub repository
+# - Set environment variables
+# - Deploy otomatis
+```
+
+### Docker Deployment
+
+```bash
+# Build dan run
+docker-compose up -d
+
+# Atau manual
+docker build -t otaku-api .
+docker run -p 3000:3000 -e NODE_ENV=production otaku-api
+```
 
 ## 🛠️ Troubleshooting
 

@@ -1,0 +1,43 @@
+# Dependencies (Vercel will install)
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Debug files
+debug.html
+
+# Docker files (tidak diperlukan di Vercel)
+docker-compose.yml
+docker-compose.override.yml
+Dockerfile
+.dockerignore
+
+# Development only
+server.js
+serverless/
+
+# Testing
+coverage/
+.nyc_output/
+*.test.js
+*.spec.js
+
+# OS files
+.DS_Store
+*.swp
+*.swo
+*~
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
